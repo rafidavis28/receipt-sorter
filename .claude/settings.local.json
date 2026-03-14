@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:digi.rami-levy.co.il)",
+      "WebFetch(domain:carrefour.pairzon.com)",
+      "WebFetch(domain:osher.pairzon.com)",
+      "WebFetch(domain:invoice.shufersal.co.il)",
+      "Bash(cd:*)",
+      "Bash(cd:)",
+      "Bash(curl:*)",
+      "WebFetch(domain:digi-api.rami-levy.co.il)",
+      "Bash(node:*)"
+    ]
+  }
+}
