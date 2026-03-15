@@ -68,10 +68,16 @@ async function fetchPairzonJson(apiUrl: string, subdomain: string): Promise<stri
   } catch {
     // Fallback to curl — different TLS fingerprint, bypasses bot detection
     const { execSync } = await import("child_process");
-    return execSync(`curl -s -L --max-time 15 ${headers} "${apiUrl}"`, {
-      encoding: "utf-8",
-      maxBuffer: 2 * 1024 * 1024,
-    });
+    try {
+      return execSync(`curl -s -L --max-time 15 ${headers} "${apiUrl}"`, {
+        encoding: "utf-8",
+        maxBuffer: 2 * 1024 * 1024,
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+    } catch (curlErr) {
+      const err = curlErr as { stderr?: string; status?: number };
+      throw new Error(`curl failed (exit ${err.status}): ${err.stderr || "no output"}`);
+    }
   }
 }
 
