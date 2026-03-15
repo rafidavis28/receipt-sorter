@@ -48,7 +48,16 @@ export async function fetchPairzonReceipt(
   p: string
 ): Promise<ParsedReceipt> {
   const apiUrl = `https://${subdomain}.pairzon.com/v1.0/documents/${id}?p=${p}`;
-  const res = await fetch(apiUrl);
+  const res = await fetch(apiUrl, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      Accept: "application/json, text/plain, */*",
+      "Accept-Language": "he-IL,he;q=0.9,en;q=0.8",
+      Referer: `https://${subdomain}.pairzon.com/`,
+      Origin: `https://${subdomain}.pairzon.com`,
+    },
+  });
   if (!res.ok) {
     throw new Error(`Failed to fetch receipt from Pairzon API: ${res.status}`);
   }
