@@ -1,4 +1,31 @@
+import https from "https";
 import { ParsedReceipt, ReceiptItem } from "../types";
+
+function httpsGet(url: string, headers: Record<string, string>): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const req = https.request(
+      {
+        hostname: parsed.hostname,
+        path: parsed.pathname + parsed.search,
+        method: "GET",
+        headers,
+      },
+      (res) => {
+        if (res.statusCode && res.statusCode >= 400) {
+          reject(new Error(`HTTP ${res.statusCode}`));
+          return;
+        }
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk) => chunks.push(chunk));
+        res.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+      }
+    );
+    req.on("error", reject);
+    req.setTimeout(15000, () => { req.destroy(); reject(new Error("timeout")); });
+    req.end();
+  });
+}
 
 interface PairzonItem {
   id: string;
@@ -48,20 +75,16 @@ export async function fetchPairzonReceipt(
   p: string
 ): Promise<ParsedReceipt> {
   const apiUrl = `https://${subdomain}.pairzon.com/v1.0/documents/${id}?p=${p}`;
-  const res = await fetch(apiUrl, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      Accept: "application/json, text/plain, */*",
-      "Accept-Language": "he-IL,he;q=0.9,en;q=0.8",
-      Referer: `https://${subdomain}.pairzon.com/`,
-      Origin: `https://${subdomain}.pairzon.com`,
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to fetch receipt from Pairzon API: ${res.status}`);
-  }
-  const data: PairzonResponse = await res.json();
+  const headers = {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    Accept: "application/json, text/plain, */*",
+    "Accept-Language": "he-IL,he;q=0.9,en;q=0.8",
+    Referer: `https://${subdomain}.pairzon.com/`,
+    Origin: `https://${subdomain}.pairzon.com`,
+  };
+  const body = await httpsGet(apiUrl, headers);
+  const data: PairzonResponse = JSON.parse(body);
   return parsePairzonData(data, subdomain);
 }
 
