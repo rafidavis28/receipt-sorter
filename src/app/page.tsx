@@ -8,6 +8,10 @@ import {
   CATEGORY_CONFIG,
 } from "@/lib/types";
 
+function isPairzonUrl(url: string): boolean {
+  return /pairzon\.com/.test(url);
+}
+
 type Step = "input" | "assign" | "summary";
 
 export default function Home() {
@@ -27,7 +31,8 @@ export default function Home() {
     setError(null);
 
     try {
-      const res = await fetch("/api/parse", {
+      const endpoint = isPairzonUrl(url.trim()) ? "/api/pairzon" : "/api/parse";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: url.trim() }),
