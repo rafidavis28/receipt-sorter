@@ -9,7 +9,13 @@
       "Bash(cd:)",
       "Bash(curl:*)",
       "WebFetch(domain:digi-api.rami-levy.co.il)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(vercel:*)",
+      "Bash(npx vercel:*)",
+      "Bash(gh auth:*)",
+      "Read(//c/Users/rafi/Code/Receipt Sorter/$APPDATA/**)",
+      "Read(//c/Users/rafi/AppData/Roaming/**)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh\" auth status 2>&1)"
     ]
   }
 }

@@ -7,12 +7,13 @@ import {
   SplitCategory,
   CATEGORY_CONFIG,
 } from "@/lib/types";
+import { parsePairzonRawJson } from "@/lib/parsers/pairzon";
 
 function isPairzonUrl(url: string): boolean {
   return /pairzon\.com/.test(url);
 }
 
-type Step = "input" | "assign" | "summary";
+type Step = "input" | "pairzon-manual" | "assign" | "summary";
 
 export default function Home() {
   const [step, setStep] = useState<Step>("input");
@@ -24,6 +25,9 @@ export default function Home() {
     Record<string, SplitCategory>
   >({});
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
+  const [pairzonApiUrl, setPairzonApiUrl] = useState<string | null>(null);
+  const [pairzonSubdomain, setPairzonSubdomain] = useState<string | null>(null);
+  const [pairzonJson, setPairzonJson] = useState("");
 
   const handleParse = useCallback(async () => {
     if (!url.trim()) return;
@@ -38,6 +42,13 @@ export default function Home() {
         body: JSON.stringify({ url: url.trim() }),
       });
       const data = await res.json();
+
+      if (data.error === "pairzon_blocked") {
+        setPairzonApiUrl(data.apiUrl);
+        setPairzonSubdomain(data.subdomain);
+        setStep("pairzon-manual");
+        return;
+      }
 
       if (data.error && !data.receipt) {
         setError(data.error);
@@ -74,6 +85,22 @@ export default function Home() {
     ? getCategoryTotals(receipt.items, assignments)
     : {};
 
+  const handlePairzonJson = useCallback(() => {
+    if (!pairzonJson.trim() || !pairzonSubdomain) return;
+    try {
+      const parsed = parsePairzonRawJson(pairzonJson.trim(), pairzonSubdomain);
+      if (!parsed.items.length) {
+        setError("לא נמצאו פריטים ב-JSON שהודבק.");
+        return;
+      }
+      setReceipt(parsed);
+      setAssignments({});
+      setStep("assign");
+    } catch {
+      setError("ה-JSON שהודבק אינו תקין. נסה שוב.");
+    }
+  }, [pairzonJson, pairzonSubdomain]);
+
   const handleReset = useCallback(() => {
     setStep("input");
     setUrl("");
@@ -81,6 +108,9 @@ export default function Home() {
     setAssignments({});
     setActiveItemId(null);
     setError(null);
+    setPairzonApiUrl(null);
+    setPairzonSubdomain(null);
+    setPairzonJson("");
   }, []);
 
   const summaryText = allAssigned
@@ -141,6 +171,65 @@ export default function Home() {
 
           <div className="text-xs text-gray-400 text-center space-y-1 mt-6">
             <p>נתמכים: רמי לוי · קרפור · אושר עד · שופרסל</p>
+          </div>
+        </div>
+      )}
+
+      {/* Step 1b: Pairzon manual paste */}
+      {step === "pairzon-manual" && pairzonApiUrl && (
+        <div className="space-y-4">
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800 space-y-2">
+            <p className="font-semibold">נדרשת טעינה ידנית לאושר עד / קרפור</p>
+            <p>השרת אינו יכול לגשת לנתוני הקבלה ישירות. בצע את השלבים הבאים:</p>
+            <ol className="list-decimal list-inside space-y-1 text-xs">
+              <li>לחץ על הקישור למטה לפתיחת ה-API בדפדפן</li>
+              <li>בחר הכל (Ctrl+A) והעתק (Ctrl+C)</li>
+              <li>הדבק למטה ולחץ &quot;טען&quot;</li>
+            </ol>
+          </div>
+
+          <a
+            href={pairzonApiUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full py-3 rounded-xl bg-blue-600 text-white font-medium text-sm text-center"
+          >
+            פתח קישור API ↗
+          </a>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              הדבק את תוכן ה-JSON כאן:
+            </label>
+            <textarea
+              value={pairzonJson}
+              onChange={(e) => { setPairzonJson(e.target.value); setError(null); }}
+              placeholder='{"id":"...","items":[...],"total":...}'
+              className="w-full h-32 px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+              dir="ltr"
+            />
+          </div>
+
+          {error && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleReset}
+              className="px-4 py-3 rounded-xl border border-gray-300 text-gray-600 font-medium text-sm"
+            >
+              חזור
+            </button>
+            <button
+              onClick={handlePairzonJson}
+              disabled={!pairzonJson.trim()}
+              className="flex-1 py-3 rounded-xl bg-green-600 text-white font-medium text-base disabled:opacity-40"
+            >
+              טען קבלה
+            </button>
           </div>
         </div>
       )}
