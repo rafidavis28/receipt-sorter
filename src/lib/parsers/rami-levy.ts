@@ -8,7 +8,15 @@ export function isRamiLevyUrl(url: string): boolean {
 export async function fetchRamiLevyReceipt(
   url: string
 ): Promise<ParsedReceipt> {
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      Accept:
+        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "he-IL,he;q=0.9,en;q=0.8",
+    },
+  });
   if (!res.ok) {
     throw new Error(`Failed to fetch Rami Levy receipt: ${res.status}`);
   }
