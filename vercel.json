@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "src/app/api/parse/route.ts": {
+      "regions": ["fra1"]
+    }
+  }
+}
